@@ -1,10 +1,18 @@
+const cookieSession = require('cookie-session')
 const express = require("express");
+
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
 
+app.use(cookieSession({
+  name: 'session',
+  keys: ["key1", "key2"]
+}))
+
 app.use(express.urlencoded({ extended: true }));
+
 
 function generateRandomString() {
   let randomString = "";
@@ -63,7 +71,7 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-app.post("/urls", (req, res) => {
+app.post("/urls/newURL", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
@@ -81,6 +89,13 @@ app.post("/urls/:id/edit", (req, res) => {
   urlDatabase[shortURL] = req.body.newURL;
   res.redirect("/urls");
 });
+
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  req.session.userID = username;
+  console.log(req.session.username)
+  res.redirect("/urls")
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
