@@ -14,24 +14,27 @@
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
     />
-    <title>New URL - TinyApp Example</title>
+    <title>Login</title>
   </head>
 
   <body>
     <%- include('partials/_header') %>
 
-    <h1>Login</h1>
-    <form class="row g-3" method="POST" action="/login">
-      <div class="col-auto">
-        <input type="email" name="email" class="form-control" placeholder="Email">
-      </div>
-      <div class="col-auto">
-        <input type="password" name="password" class="form-control" placeholder="Password">
-      </div>
-      <div class="col-auto">
-        <button type="submit" class="btn btn-outline-dark mb-1">Login</button>
-      </div>
-    </form>
+    <main style="margin: 1em;">
+      <h1>Login</h1>
+      <form method="POST" action="/login" class="w-50 p-3">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email address</label>
+          <input type="email" name="email" class="form-control" id="email" placeholder="Enter email">
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" id="password" placeholder="Password">
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+    </main>
+    
   <!-- Bootstrap JS -->
   <script
   src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
