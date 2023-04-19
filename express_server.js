@@ -12,7 +12,7 @@ app.set("view engine", "ejs");
 //   keys: ["key1", "key2"]
 // }));
 
-app.use(cookieParser())
+app.use(cookieParser());
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,6 +24,15 @@ function generateRandomString() {
     randomString += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return randomString;
+};
+
+const checkUsersEmail = function (email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return true;
+    }
+  }
+  return null;
 };
 
 const users = {};
@@ -54,8 +63,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("user_registration")
-})
+  res.render("user_registration");
+});
 
 app.get("/urls/:id", (req, res) => {
   const paramsId = req.params.id;
@@ -109,11 +118,18 @@ app.post("/register", (req, res) => {
     id: userId,
     email,
     password
+  };
+
+  if (!userVars.email || !userVars.password) {
+    return res.status(400).send('Please enter both an email and a password to register.');;
+  } else if (checkUsersEmail(req.body.email)) {
+    return res.status(400).send('A user with this email already exists.');
+  } else {
+    res.cookie("user_id", userId);
+    users[userId] = userVars;
+    res.redirect("/urls");
   }
-  users[userId] = userVars;
-  res.cookie("user_id", userId)
-  res.redirect("/urls");
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
