@@ -19,14 +19,7 @@
       </div>
     </div>
     <% if(!user) { %>
-      <form class="row g-3" method="POST" action="/login">
-        <div class="col-auto">
-          <input type="text" name="username" class="form-control" placeholder="Username">
-        </div>
-        <div class="col-auto">
-          <button type="submit" class="btn btn-outline-dark mb-1">Login</button>
-        </div>
-      </form>
+      <a href="/register"><button type="button" class="btn btn-primary">Register</button></a> <a href="/login"><button type="button" class="btn btn-primary ml-2">Login</button></a>
     <% } else { %>
     <form class="row g-3" method="POST" action="/logout">
       <div class="col-auto">
