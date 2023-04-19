@@ -29,7 +29,7 @@ function generateRandomString() {
 const checkUsersEmail = function (email) {
   for (const userId in users) {
     if (users[userId].email === email) {
-      return true;
+      return users[userId];
     }
   }
   return null;
@@ -43,18 +43,18 @@ const urlDatabase = {
 };
 
 app.get("/urls", (req, res) => {
-  let userId = req.cookies.user_id;
-  let user = users[userId];
+  let currentUserId = req.cookies.user_id;
+  let user = users[currentUserId];
   let templateVars = {
     urls: urlDatabase,
-    user: user
+    user
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  let userId = req.cookies.user_id;
-  let user = users[userId];
+  let currentUserId = req.cookies.user_id;
+  let user = users[currentUserId];
   let templateVars = {
     urls: urlDatabase,
     user: user
@@ -62,8 +62,22 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+app.get("/login", (req, res) => {
+  let currentUserId = req.cookies.user_id;
+  let user = users[currentUserId];
+  let templateVars = {
+    user: user
+  };
+  res.render("user_login", templateVars)
+})
+
 app.get("/register", (req, res) => {
-  res.render("user_registration");
+  let currentUserId = req.cookies.user_id;
+  let user = users[currentUserId];
+  let templateVars = {
+    user: user
+  };
+  res.render('user_registration', templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -100,8 +114,11 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  // const username = req.body.username;
-  // res.cookie("username", username); // store item in cookie using cookie-parser ("key", value)
+  const {email, password} = req.body;
+  const user = checkUsersEmail(email);
+  if(user && user.password === password) {
+    res.cookie("user_id", user.id)
+  }
   res.redirect("/urls");
 });
 
@@ -112,8 +129,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   const userId = generateRandomString();
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email, password } = req.body;
   let userVars = {
     id: userId,
     email,
