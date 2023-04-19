@@ -32,7 +32,7 @@ const checkUsersEmail = function (email) {
       return users[userId];
     }
   }
-  return null;
+  return false;
 };
 
 const users = {};
@@ -116,15 +116,20 @@ app.post("/urls/:id/edit", (req, res) => {
 app.post("/login", (req, res) => {
   const {email, password} = req.body;
   const user = checkUsersEmail(email);
-  if(user && user.password === password) {
-    res.cookie("user_id", user.id)
+  if(!user) {
+    return res.status(403).send("Please enter your email correctly.")
   }
-  res.redirect("/urls");
+  if(user && user.password !== password) {
+    return res.status(403).send("Please enter your password correctly.")
+  } else if (user && user.password === password) {
+    res.cookie("user_id", user.id)
+    res.redirect("/urls");
+  }
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.post("/register", (req, res) => {
