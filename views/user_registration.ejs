@@ -13,20 +13,21 @@
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
     crossorigin="anonymous"
   />
-  <title>TinyApp</title>
+  <title>Registration</title>
 </head>
 <body>
   <%- include('partials/_header') %>
-  
+
   <main style="margin: 1em;">
-    <form method="POST" action="/register">
+    <h1>Create Account</h1>
+    <form method="POST" action="/register" class="w-50 p-3">
       <div class="mb-3">
         <label for="email" class="form-label">Email address</label>
-        <input type="email" name="email" class="form-control" id="email" aria-describedby="emailHelp">
+        <input type="email" name="email" class="form-control" id="email" placeholder="Enter email">
       </div>
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" id="password">
+        <input type="password" name="password" class="form-control" id="password" placeholder="Password">
       </div>
       <button type="submit" class="btn btn-primary">Register</button>
     </form>
