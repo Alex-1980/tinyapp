@@ -55,6 +55,9 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   let currentUserId = req.cookies.user_id;
   let user = users[currentUserId];
+  if (!currentUserId) {
+    return res.redirect("/login");
+  }
   let templateVars = {
     urls: urlDatabase,
     user: user
@@ -68,8 +71,8 @@ app.get("/login", (req, res) => {
   let templateVars = {
     user: user
   };
-  res.render("user_login", templateVars)
-})
+  res.render("user_login", templateVars);
+});
 
 app.get("/register", (req, res) => {
   let currentUserId = req.cookies.user_id;
@@ -84,7 +87,19 @@ app.get("/urls/:id", (req, res) => {
   const paramsId = req.params.id;
   const userId = req.cookies.user_id;
   let user = users[userId];
-  const templateVars = { id: paramsId, longURL: urlDatabase[paramsId], user: user };
+  if(!urlDatabase[paramsId]) {
+    const templateVars = {
+      // id: paramsId, longURL: urlDatabase[paramsId],
+      user: user
+    };
+    res.status(403).send("This URL_ID does not exist!");
+  }
+  const longURL = urlDatabase[paramsId];
+  const templateVars = {
+    longURL: longURL,
+    id: paramsId,
+    user: users[req.cookies.userID],
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -94,10 +109,21 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-app.post("/urls/newURL", (req, res) => {
+app.post("/urls", (req, res) => {
+  if (!req.cookies.user_id) {
+    res.status(400).send('Please login or register to create your urls.');
+  }
+
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
+
+  // urlDatabase[shortURL] = {
+  //   longURL: longURL,
+  //   userId: req.cookies.user_id,
+  // };
+
   urlDatabase[shortURL] = longURL;
+
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -114,15 +140,15 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const {email, password} = req.body;
+  const { email, password } = req.body;
   const user = checkUsersEmail(email);
-  if(!user) {
-    return res.status(403).send("Please enter your email correctly.")
+  if (!user) {
+    return res.status(403).send("Please enter your email correctly.");
   }
-  if(user && user.password !== password) {
-    return res.status(403).send("Please enter your password correctly.")
+  if (user && user.password !== password) {
+    return res.status(403).send("Please enter your password correctly.");
   } else if (user && user.password === password) {
-    res.cookie("user_id", user.id)
+    res.cookie("user_id", user.id);
     res.redirect("/urls");
   }
 });
