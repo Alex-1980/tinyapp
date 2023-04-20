@@ -1,9 +1,9 @@
 const { generateRandomString, urlsForUser, checkUserPassword, getUserByEmail } = require('./helpers.js');
 
-const cookieSession = require('cookie-session');
+const cookieSession = require("cookie-session");
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const methodOverride = require('method-override');
+const methodOverride = require("method-override");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -11,13 +11,13 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 app.use(cookieSession({
-  name: 'session',
+  name: "session",
   keys: ["key1", "key2"]
 }));
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use(methodOverride('_method'));
+app.use(methodOverride("_method"));
 
 // app.use(cookieParser());
 
@@ -48,16 +48,16 @@ const urlDatabase = {
 app.get("/", (req, res) => {
   let userID = req.session.user_id;
   if (!userID) {
-    res.redirect('/login');
+    res.redirect("/login");
   }
-  res.redirect('/urls');
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
   let userId = req.session.user_id;
   let user = users[userId];
   if (!userId) {
-    res.status(400).send('Please login or register to view your urls.');
+    res.status(400).send("Please login or register to view your urls.");
   }
 
   let templateVars = {
@@ -96,7 +96,7 @@ app.get("/register", (req, res) => {
   let templateVars = {
     user: user
   };
-  res.render('user_registration', templateVars);
+  res.render("user_registration", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -134,7 +134,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
-    res.status(400).send('Please login or register to create your urls.');
+    res.status(400).send("Please login or register to create your urls.");
   }
 
   const shortURL = generateRandomString();
@@ -183,9 +183,9 @@ app.post("/register", (req, res) => {
   };
 
   if (!userVars.email || !userVars.password) {
-    res.status(400).send('Please enter both an email and a password to register.');;
+    res.status(400).send("Please enter both an email and a password to register.");;
   } else if (getUserByEmail(req.body.email, users)) {
-    res.status(400).send('A user with this email already exists.');
+    res.status(400).send("A user with this email already exists.");
   } else {
     users[userID] = userVars;
     req.session.user_id = userID;
