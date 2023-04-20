@@ -3,6 +3,7 @@ const { generateRandomString, urlsForUser, checkUserPassword, getUserByEmail } =
 const cookieSession = require('cookie-session');
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const methodOverride = require('method-override');
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -15,6 +16,8 @@ app.use(cookieSession({
 }));
 
 app.use(express.urlencoded({ extended: true }));
+
+app.use(methodOverride('_method'));
 
 // app.use(cookieParser());
 
@@ -190,7 +193,7 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   if (!req.session.user_id === urlDatabase[shortURL].userID) {
     res.status(400).send("You are not authorized to delete this");
