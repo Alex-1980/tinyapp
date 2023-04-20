@@ -1,5 +1,6 @@
+const { generateRandomString, urlsForUser, checkUserPassword, getUserByEmail } = require('./helpers.js');
+
 const cookieSession = require('cookie-session');
-// const cookieParser = require('cookie-parser');
 const express = require("express");
 const bcrypt = require("bcryptjs");
 
@@ -13,50 +14,22 @@ app.use(cookieSession({
   keys: ["key1", "key2"]
 }));
 
-// app.use(cookieParser());
-
 app.use(express.urlencoded({ extended: true }));
 
+// app.use(cookieParser());
 
-function generateRandomString() {
-  let randomString = "";
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 6; i++) {
-    randomString += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return randomString;
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
 };
-
-const urlsForUser = function (id) {
-  const urlsOfUser = {};
-
-  for (const shortUrl in urlDatabase) {
-    if(urlDatabase[shortUrl].userID === id) {
-      urlsOfUser[shortUrl] = urlDatabase[shortUrl];
-    }
-  }
-  return urlsOfUser;
-};
-
-const checkUserPassword = function(password) {
-  for(const user in users) {
-    if(bcrypt.compareSync(password, users[user].password)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-const getUserByEmail = function(email) {
-  for (const user in users) {
-    if(users[user].email === email) {
-      return users[user].id;
-    }
-  }
-  return false;
-}
-
-const users = {};
 
 const urlDatabase = {
   b6UTxQ: {
@@ -71,23 +44,23 @@ const urlDatabase = {
 
 app.get("/", (req, res) => {
   let userID = req.session.user_id;
-  if(!userID){
+  if (!userID) {
     res.redirect('/login');
-  } 
+  }
   res.redirect('/urls');
 });
 
 app.get("/urls", (req, res) => {
   let userId = req.session.user_id;
   let user = users[userId];
-  if(!userId) {
-    return res.status(400).send('Please login or register to view your urls.');
+  if (!userId) {
+    res.status(400).send('Please login or register to view your urls.');
   }
 
   let templateVars = {
-    urls: urlsForUser(userId),
+    urls: urlsForUser(userId, urlDatabase),
     user
-  }
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -127,14 +100,14 @@ app.get("/urls/:id", (req, res) => {
   const paramsId = req.params.id;
   const userID = req.session.user_id;
   let user = users[userID];
-  if(!urlDatabase[paramsId]) {
+  if (!urlDatabase[paramsId]) {
     const templateVars = {
       user: users[userID]
     };
     res.status(403).send("This URL_ID does not exist!");
   }
 
-  if(userID !== urlDatabase[paramsId].userID) {
+  if (userID !== urlDatabase[paramsId].userID) {
     const templateVars = {
       user: users[userID]
     };
@@ -174,17 +147,17 @@ app.post("/urls", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const userID = getUserByEmail(email);
+  const userID = getUserByEmail(email, users);
 
   if (!userID) {
     return res.status(403).send("Please enter your email correctly.");
   }
 
-  if (userID && !checkUserPassword(password)) {
+  if (userID && !checkUserPassword(password, users)) {
     res.status(403).send("Please enter your password correctly.");
   }
 
-  if (userID && checkUserPassword(password)) {
+  if (userID && checkUserPassword(password, users)) {
     req.session.user_id = userID;
     res.redirect("/urls");
   }
@@ -205,10 +178,10 @@ app.post("/register", (req, res) => {
     email,
     password: hashedPassword
   };
-  
-  if(!userVars.email || !userVars.password) {
+
+  if (!userVars.email || !userVars.password) {
     res.status(400).send('Please enter both an email and a password to register.');;
-  } else if (getUserByEmail(req.body.email)) {
+  } else if (getUserByEmail(req.body.email, users)) {
     res.status(400).send('A user with this email already exists.');
   } else {
     users[userID] = userVars;
@@ -219,8 +192,8 @@ app.post("/register", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
-  if(!req.session.user_id === urlDatabase[shortURL].userID) {
-    res.status(400).send("You are not authorized to delete this")
+  if (!req.session.user_id === urlDatabase[shortURL].userID) {
+    res.status(400).send("You are not authorized to delete this");
   }
 
   delete urlDatabase[shortURL];
@@ -229,8 +202,8 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/urls/:id/edit", (req, res) => {
   const shortURL = req.params.id;
-  if(!req.session.user_id === urlDatabase[shortURL].userID) {
-    res.status(400).render("You are not authorized to edit this")
+  if (!req.session.user_id === urlDatabase[shortURL].userID) {
+    res.status(400).render("You are not authorized to edit this");
   }
 
   urlDatabase[shortURL] = req.body.newURL;
