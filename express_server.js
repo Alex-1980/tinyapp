@@ -1,6 +1,7 @@
 // const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
 const express = require("express");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -45,6 +46,15 @@ const urlsForUser = function (id) {
   }
   return urlsOfUser;
 };
+
+const checkUserPassword = function(password) {
+  for(const user in users) {
+    if(bcrypt.compareSync(password, users[user].password)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 const users = {};
 
@@ -162,6 +172,48 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  const user = checkUsersEmail(email);
+  if (!user) {
+    return res.status(403).send("Please enter your email correctly.");
+  }
+  if (user && !checkUserPassword(password)) {
+    return res.status(403).send("Please enter your password correctly.");
+  } else if (user && checkUserPassword(password)) {
+    res.cookie("user_id", user.id);
+    res.redirect("/urls");
+  }
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/login");
+});
+
+app.post("/register", (req, res) => {
+  const userId = generateRandomString();
+  const { email, password } = req.body;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  let userVars = {
+    id: userId,
+    email,
+    password: hashedPassword
+  };
+  
+  if (!userVars.email || !userVars.password) {
+    return res.status(400).send('Please enter both an email and a password to register.');;
+  } else if (checkUsersEmail(req.body.email)) {
+    return res.status(400).send('A user with this email already exists.');
+  } else {
+    res.cookie("user_id", userId);
+    users[userId] = userVars;
+    res.redirect("/urls");
+  }
+  console.log(users)
+});
+
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
   if(req.cookies.user_id === urlDatabase[shortURL].userID) {
@@ -185,46 +237,6 @@ app.post("/urls/:id/edit", (req, res) => {
       user: users[req.cookies.user_id]
     };
     return res.status(400).render("You are not authorized to edit this", templateVars)
-  }
-  
-});
-
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  const user = checkUsersEmail(email);
-  if (!user) {
-    return res.status(403).send("Please enter your email correctly.");
-  }
-  if (user && user.password !== password) {
-    return res.status(403).send("Please enter your password correctly.");
-  } else if (user && user.password === password) {
-    res.cookie("user_id", user.id);
-    res.redirect("/urls");
-  }
-});
-
-app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/login");
-});
-
-app.post("/register", (req, res) => {
-  const userId = generateRandomString();
-  const { email, password } = req.body;
-  let userVars = {
-    id: userId,
-    email,
-    password
-  };
-
-  if (!userVars.email || !userVars.password) {
-    return res.status(400).send('Please enter both an email and a password to register.');;
-  } else if (checkUsersEmail(req.body.email)) {
-    return res.status(400).send('A user with this email already exists.');
-  } else {
-    res.cookie("user_id", userId);
-    users[userId] = userVars;
-    res.redirect("/urls");
   }
 });
 
