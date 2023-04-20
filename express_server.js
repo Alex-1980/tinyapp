@@ -206,7 +206,7 @@ app.post("/urls/:id/edit", (req, res) => {
     res.status(400).render("You are not authorized to edit this");
   }
 
-  urlDatabase[shortURL] = req.body.newURL;
+  urlDatabase[shortURL].longURL = req.body.newURL;
   res.redirect("/urls");
 });
 
