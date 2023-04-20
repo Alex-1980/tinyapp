@@ -35,20 +35,50 @@ const checkUsersEmail = function (email) {
   return false;
 };
 
+const urlsForUser = function (id) {
+  const urlsOfUser = {};
+
+  for (const shortUrl in urlDatabase) {
+    if(urlDatabase[shortUrl].userID === id) {
+      urlsOfUser[shortUrl] = urlDatabase[shortUrl];
+    }
+  }
+  return urlsOfUser;
+};
+
 const users = {};
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  }
 };
+
+app.get("/", (req, res) => {
+  let userId = req.cookies.user_id;
+  if(userId){
+    res.redirect('/urls');
+  } else {
+    res.redirect('/login');
+  }
+});
 
 app.get("/urls", (req, res) => {
   let currentUserId = req.cookies.user_id;
   let user = users[currentUserId];
+  if(!currentUserId) {
+    return res.status(400).send('Please login or register to view your urls.');
+  }
+
   let templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(currentUserId),
     user
-  };
+  }
   res.render("urls_index", templateVars);
 });
 
@@ -89,12 +119,19 @@ app.get("/urls/:id", (req, res) => {
   let user = users[userId];
   if(!urlDatabase[paramsId]) {
     const templateVars = {
-      // id: paramsId, longURL: urlDatabase[paramsId],
-      user: user
+      user: users[userId]
     };
-    res.status(403).send("This URL_ID does not exist!");
+    return res.status(403).render("This URL_ID does not exist!", templateVars);
   }
-  const longURL = urlDatabase[paramsId];
+
+  if(userId !== urlDatabase[paramsId].userID) {
+    const templateVars = {
+      user: users[userId]
+    };
+    return res.status(403).render("TPlease login or register to see your url.", templateVars);
+  }
+
+  const longURL = urlDatabase[paramsId].longURL;
   const templateVars = {
     longURL: longURL,
     id: paramsId,
@@ -105,38 +142,51 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
   if (!req.cookies.user_id) {
-    res.status(400).send('Please login or register to create your urls.');
+    return res.status(400).send('Please login or register to create your urls.');
   }
 
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
 
-  // urlDatabase[shortURL] = {
-  //   longURL: longURL,
-  //   userId: req.cookies.user_id,
-  // };
-
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    longURL: longURL,
+    userID: req.cookies.user_id,
+  };
 
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
-  delete urlDatabase[shortURL];
-  res.redirect("/urls");
+  if(req.cookies.user_id === urlDatabase[shortURL].userID) {
+    delete urlDatabase[shortURL];
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: users[req.cookies.user_id]
+    };
+    return res.status(400).render("You are not authorized to delete this", templateVars)
+  }
 });
 
 app.post("/urls/:id/edit", (req, res) => {
   const shortURL = req.params.id;
-  urlDatabase[shortURL] = req.body.newURL;
-  res.redirect("/urls");
+  if(req.cookies.user_id === urlDatabase[shortURL].userID) {
+    urlDatabase[shortURL] = req.body.newURL;
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: users[req.cookies.user_id]
+    };
+    return res.status(400).render("You are not authorized to edit this", templateVars)
+  }
+  
 });
 
 app.post("/login", (req, res) => {
