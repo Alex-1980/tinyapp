@@ -1,25 +1,28 @@
-const { generateRandomString, urlsForUser, checkUserPassword, getUserByEmail } = require('./helpers.js');
+// -------------------- DEPENDENCIES -------------------- //
 
+const { generateRandomString, urlsForUser, checkUserPassword, getUserByEmail } = require('./helpers.js');
 const cookieSession = require("cookie-session");
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const methodOverride = require("method-override");
-
 const app = express();
+app.set("view engine", "ejs");
+
+//  -------------------- PORT -------------------- //
+
 const PORT = 8080; // default port 8080
 
-app.set("view engine", "ejs");
+// -------------------- MIDDLEWARE -------------------- //
 
 app.use(cookieSession({
   name: "session",
   keys: ["key1", "key2"]
 }));
-
 app.use(express.urlencoded({ extended: true }));
-
 app.use(methodOverride("_method"));
-
 // app.use(cookieParser());
+
+// -------------------- DATABASE -------------------- //
 
 const users = {
   userRandomID: {
@@ -44,6 +47,8 @@ const urlDatabase = {
     userID: "aJ48lW",
   }
 };
+
+// -------------------- GET REQUESTS -------------------- //
 
 app.get("/", (req, res) => {
   let userID = req.session.user_id;
@@ -132,6 +137,8 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+// -------------------- POST REQUESTS -------------------- //
+
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
     res.status(400).send("Please login or register to create your urls.");
@@ -212,6 +219,8 @@ app.post("/urls/:id/edit", (req, res) => {
   urlDatabase[shortURL].longURL = req.body.newURL;
   res.redirect("/urls");
 });
+
+// -------------------- PORT LISTENER -------------------- //
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
